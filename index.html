@@ -1287,7 +1287,12 @@
       applyRoleBasedAccess();
       
       if (role === 'tenant') {
+        const storedTenantId = sessionStorage.getItem('app-logged-in-tenant-id');
+        if (storedTenantId) {
+          state.selectedTenantId = storedTenantId;
+        }
         showScreen('screen-tenant-details');
+        renderSelectedTenant();
       } else {
         showScreen('screen-dashboard');
         renderSelectedTenant();
@@ -1485,8 +1490,15 @@
             const cloudData = snapshot.val();
             if (cloudData) {
               const currentFilter = state.dashboardFilter || 'all';
+              // Preserve current tenant session before overwriting state
+              const currentRole = sessionStorage.getItem('app-logged-in-role') || 'owner';
+              const currentTenantId = sessionStorage.getItem('app-logged-in-tenant-id');
               state = sanitizeState(cloudData);
               state.dashboardFilter = currentFilter;
+              // Restore correct tenant ID after cloud sync
+              if (currentRole === 'tenant' && currentTenantId) {
+                state.selectedTenantId = currentTenantId;
+              }
               updateDashboardStats();
               renderTenantList();
               if (state.selectedTenantId) {
@@ -1806,28 +1818,32 @@
     function renderSelectedTenant() {
       const role = sessionStorage.getItem('app-logged-in-role') || 'owner';
       let tenantId = null;
+
       if (role === 'tenant') {
+        // For tenants: ALWAYS use the session-stored ID — never fallback to wrong tenant
         tenantId = sessionStorage.getItem('app-logged-in-tenant-id');
-        if (tenantId) {
-          state.selectedTenantId = tenantId;
-        }
+        if (!tenantId) return; // Not logged in properly, do nothing
+        state.selectedTenantId = tenantId;
       } else {
         tenantId = state.selectedTenantId;
       }
 
-      const tenant = state.tenants.find(t => 
-        String(t.id) === String(tenantId) || 
-        (t.phone && String(t.phone).replace(/[^\d]/g, "") === String(tenantId).replace(/[^\d]/g, "")) ||
-        (t.loginId && String(t.loginId).trim().toLowerCase() === String(tenantId).trim().toLowerCase())
-      );
+      // STRICT match by numeric ID only — prevents wrong-tenant cross-match
+      const tenant = state.tenants.find(t => String(t.id) === String(tenantId));
 
       if (!tenant) {
         if (role === 'tenant') {
-          if (state.tenants.length > 0) {
-            const fallbackTenant = state.tenants[0];
-            state.selectedTenantId = fallbackTenant.id;
-            sessionStorage.setItem('app-logged-in-tenant-id', String(fallbackTenant.id));
-            renderSelectedTenant();
+          // NEVER show another tenant's data — show loading placeholder instead
+          const billsContainer = document.getElementById('detail-bills-list');
+          if (billsContainer) {
+            billsContainer.innerHTML = `
+              <div class="py-10 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                <i data-lucide="loader" class="w-7 h-7 mx-auto mb-2 text-indigo-400 animate-spin"></i>
+                <p class="text-xs font-bold text-slate-600">Loading your account...</p>
+                <p class="text-[10px] mt-1">Please wait a moment.</p>
+              </div>
+            `;
+            lucide.createIcons({ root: billsContainer });
           }
           return;
         }
