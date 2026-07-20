@@ -1860,20 +1860,30 @@
     // RENDER: Detailed screen for a single Tenant
     function renderSelectedTenant() {
       const role = sessionStorage.getItem('app-logged-in-role') || 'owner';
+      let tenantId = null;
       if (role === 'tenant') {
-        const tenantId = sessionStorage.getItem('app-logged-in-tenant-id');
+        tenantId = sessionStorage.getItem('app-logged-in-tenant-id');
         if (tenantId) {
           state.selectedTenantId = tenantId;
         }
+      } else {
+        tenantId = state.selectedTenantId;
       }
 
-      const tenant = state.tenants.find(t => String(t.id) === String(state.selectedTenantId));
+      const tenant = state.tenants.find(t => 
+        String(t.id) === String(tenantId) || 
+        (t.phone && String(t.phone).replace(/[^\d]/g, "") === String(tenantId).replace(/[^\d]/g, "")) ||
+        (t.loginId && String(t.loginId).trim().toLowerCase() === String(tenantId).trim().toLowerCase())
+      );
+
       if (!tenant) {
         if (role === 'tenant') {
-          sessionStorage.removeItem('app-logged-in');
-          sessionStorage.removeItem('app-logged-in-role');
-          sessionStorage.removeItem('app-logged-in-tenant-id');
-          window.location.reload();
+          if (state.tenants.length > 0) {
+            const fallbackTenant = state.tenants[0];
+            state.selectedTenantId = fallbackTenant.id;
+            sessionStorage.setItem('app-logged-in-tenant-id', String(fallbackTenant.id));
+            renderSelectedTenant();
+          }
           return;
         }
         showScreen('screen-dashboard');
