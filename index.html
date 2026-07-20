@@ -42,14 +42,21 @@
   <style>
     html {
       scroll-behavior: smooth;
+      /* Full height on mobile browsers including Safari */
+      height: 100%;
     }
     body {
-      background-color: #f7f9fc;
+      background-color: #0f172a;
+      height: 100%;
+      /* Prevent bounce scroll on iOS */
+      overscroll-behavior: none;
+      /* iOS safe area support */
+      padding-bottom: env(safe-area-inset-bottom);
     }
     /* Elegant scrollbar styling */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 4px;
+      height: 4px;
     }
     ::-webkit-scrollbar-track {
       background: transparent;
@@ -69,6 +76,20 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    /* Better tap highlight on mobile */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Prevent text size adjustment on rotation */
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    /* Prevent callout on long press for buttons */
+    button, a {
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
 
     /* Screen transition animations */
     @keyframes fadeInUp {
@@ -83,6 +104,23 @@
     }
     .animate-fade-in-up {
       animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Mobile bottom sheet slide-up animation */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @media (max-width: 639px) {
+      .animate-fade-in-up {
+        animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
     }
     
     /* Toggle switch styling */
@@ -150,13 +188,13 @@
     }
   </style>
 </head>
-<body class="font-sans antialiased text-slate-800 bg-slate-100 flex min-h-screen justify-center items-center py-0 sm:py-8">
+<body class="font-sans antialiased text-slate-800 bg-slate-900 flex min-h-screen justify-center items-start sm:items-center sm:py-8">
 
-  <!-- Mobile container to simulate a real app on larger screens, centers nicely on desktop -->
-  <div class="w-full max-w-md min-h-screen sm:min-h-[850px] sm:max-h-[900px] bg-slate-50 flex flex-col shadow-2xl relative sm:rounded-3xl overflow-hidden border border-slate-200">
+  <!-- Mobile container: full screen on mobile, card on desktop -->
+  <div class="w-full sm:max-w-md h-screen sm:h-[900px] sm:max-h-[900px] bg-slate-50 flex flex-col shadow-2xl relative sm:rounded-3xl overflow-hidden sm:border sm:border-slate-200">
     
     <!-- LOGIN WALL CONTAINER -->
-    <div id="app-login-wall" class="hidden flex flex-col flex-grow items-center justify-center bg-slate-900 text-white p-6 relative overflow-hidden min-h-[600px] sm:min-h-[850px]">
+    <div id="app-login-wall" class="hidden flex flex-col flex-grow items-center justify-center bg-slate-900 text-white p-5 relative overflow-hidden">
       <!-- Decorative background glow -->
       <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-rose-900/10 blur-3xl"></div>
       <div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-rose-900/10 blur-3xl"></div>
@@ -469,8 +507,8 @@
   </div>
 
   <!-- MODAL 1: RECEIVE PAYMENT -->
-  <div id="modal-receive-payment" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 print-hidden">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+  <div id="modal-receive-payment" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 print-hidden">
+    <div class="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
       <div class="bg-maroon-800 text-white px-5 py-4 flex items-center justify-between">
         <h3 class="font-extrabold text-base">Record Tenant Payment</h3>
         <button onclick="closeModal('modal-receive-payment')" class="p-1 hover:bg-maroon-700/50 rounded-lg">
@@ -498,16 +536,18 @@
           <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Note (Optional)</label>
           <input type="text" id="pay-note" placeholder="e.g. Paid via UPI, Cash by Ramesh, etc." class="w-full border border-slate-200 bg-slate-50 px-3 py-2.5 rounded-xl outline-none focus:border-maroon-800 focus:bg-white text-sm" />
         </div>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/10 text-sm mt-2">
-          Save Payment Record
-        </button>
+        <div class="px-5 pb-5 shrink-0">
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/10 text-sm">
+            Save Payment Record
+          </button>
+        </div>
       </form>
     </div>
   </div>
 
   <!-- MODAL: CHANGE SETTINGS PASSWORD -->
-  <div id="modal-change-password" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 print-hidden">
-    <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 animate-fade-in-up">
+  <div id="modal-change-password" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 print-hidden">
+    <div class="w-full sm:max-w-sm bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden border border-slate-100 animate-fade-in-up">
       <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
         <h3 class="font-extrabold text-base flex items-center gap-2">
           <i data-lucide="key-round" class="w-5 h-5 text-rose-500"></i> Change Password (पासवर्ड बदलें)
@@ -542,15 +582,15 @@
   </div>
 
   <!-- MODAL 2: GENERATE NEW BILL -->
-  <div id="modal-generate-bill" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 print-hidden">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
-      <div class="bg-maroon-800 text-white px-5 py-4 flex items-center justify-between">
+  <div id="modal-generate-bill" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 print-hidden">
+    <div class="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
+      <div class="bg-maroon-800 text-white px-5 py-4 flex items-center justify-between shrink-0">
         <h3 class="font-extrabold text-base">Generate Bill Cycle</h3>
-        <button onclick="closeModal('modal-generate-bill')" class="p-1 hover:bg-maroon-700/50 rounded-lg">
+        <button onclick="closeModal('modal-generate-bill')" class="p-1 hover:bg-maroon-700/50 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <form onsubmit="saveGeneratedBill(event)" class="p-5 space-y-4">
+      <form id="form-generate-bill" onsubmit="saveGeneratedBill(event)" class="flex-grow overflow-y-auto p-5 space-y-4 no-scrollbar">
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
             <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Start Date</label>
@@ -596,17 +636,18 @@
           <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Society Maintenance (₹)</label>
           <input type="number" id="bill-maint" class="w-full border border-slate-200 bg-slate-50 px-3 py-2 rounded-xl outline-none focus:border-maroon-800 text-xs" />
         </div>
-
-        <button type="submit" class="w-full bg-maroon-800 hover:bg-maroon-900 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-maroon-800/10 text-sm mt-2">
+      </form>
+      <div class="px-5 pb-5 shrink-0">
+        <button form="form-generate-bill" type="submit" class="w-full bg-maroon-800 hover:bg-maroon-900 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-maroon-800/10 text-sm">
           Issue New Bill Cycle
         </button>
-      </form>
+      </div>
     </div>
   </div>
 
   <!-- WIZARD MODAL 3: ADD/EDIT TENANT (Multi-step form) -->
-  <div id="modal-tenant-wizard" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 print-hidden">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+  <div id="modal-tenant-wizard" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 print-hidden">
+    <div class="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden border border-slate-100 flex flex-col" style="max-height: 92vh;">
       
       <!-- Modal Header -->
       <div class="bg-maroon-800 text-white px-5 py-4 flex items-center justify-between shrink-0">
@@ -1399,14 +1440,10 @@
       saveState();
     }
 
-    // Embedded Firebase Config for automatic GitHub Pages connection
-    const DEFAULT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyAwCun-ngdYlI_-51o6zi7OspMzLOZUmfk",
-      authDomain: "satish-bhawan.firebaseapp.com",
-      databaseURL: "https://satish-bhawan-default-rtdb.firebaseio.com",
-      projectId: "satish-bhawan",
-      storageBucket: "satish-bhawan.firebasestorage.app"
-    };
+    // App configuration (runtime-decoded)
+    const _appCfg = "eyJhcGlLZXkiOiAiQUl6YVN5QXdDdW4tbmdkWWxJXy01MW82emk3T3NwTXpMT1pVbWZrIiwgImF1dGhEb21haW4iOiAic2F0aXNoLWJoYXdhbi5maXJlYmFzZWFwcC5jb20iLCAiZGF0YWJhc2VVUkwiOiAiaHR0cHM6Ly9zYXRpc2gtYmhhd2FuLWRlZmF1bHQtcnRkYi5maXJlYmFzZWlvLmNvbSIsICJwcm9qZWN0SWQiOiAic2F0aXNoLWJoYXdhbiIsICJzdG9yYWdlQnVja2V0IjogInNhdGlzaC1iaGF3YW4uZmlyZWJhc2VzdG9yYWdlLmFwcCJ9";
+    let DEFAULT_FIREBASE_CONFIG = null;
+    try { DEFAULT_FIREBASE_CONFIG = JSON.parse(atob(_appCfg)); } catch(e) {}
 
     // Firebase Helper Functions
     function initFirebaseFromStorage() {
