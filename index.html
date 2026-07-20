@@ -1452,8 +1452,14 @@
       saveState();
     }
 
-    // Optional: Set default embedded Firebase Config here for automatic GitHub Pages connection
-    const DEFAULT_FIREBASE_CONFIG = null; // e.g., { apiKey: "...", projectId: "...", databaseURL: "..." }
+    // Embedded Firebase Config for automatic GitHub Pages connection
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAwCun-ngdYlI_-51o6zi7OspMzLOZUmfk",
+      authDomain: "satish-bhawan.firebaseapp.com",
+      databaseURL: "https://satish-bhawan-default-rtdb.firebaseio.com",
+      projectId: "satish-bhawan",
+      storageBucket: "satish-bhawan.firebasestorage.app"
+    };
 
     // Firebase Helper Functions
     function initFirebaseFromStorage() {
