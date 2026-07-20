@@ -7,14 +7,16 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts -->
+  <!-- Google Fonts: preconnect + swap for non-blocking load -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Firebase Compat Core & Database SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+  <!-- Firebase Compat Core & Database SDKs (local) -->
+  <script src="firebase-app-compat.js"></script>
+  <script src="firebase-database-compat.js"></script>
+  <!-- Lucide Icons (local) -->
+  <script src="lucide.js"></script>
   
   <script>
     tailwind.config = {
@@ -44,6 +46,8 @@
       scroll-behavior: smooth;
       /* Full height on mobile browsers including Safari */
       height: 100%;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
     body {
       background-color: #0f172a;
@@ -52,6 +56,9 @@
       overscroll-behavior: none;
       /* iOS safe area support */
       padding-bottom: env(safe-area-inset-bottom);
+      /* GPU compositing layer for body */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     /* Elegant scrollbar styling */
     ::-webkit-scrollbar {
@@ -76,19 +83,51 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    /* Prevent white background on browser autofill & focus */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+    
     /* Better tap highlight on mobile */
     * {
       -webkit-tap-highlight-color: transparent;
-    }
-    /* Prevent text size adjustment on rotation */
-    html {
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
+      box-sizing: border-box;
     }
     /* Prevent callout on long press for buttons */
     button, a {
       -webkit-touch-callout: none;
       touch-action: manipulation;
+    }
+    /* GPU acceleration for animated / interactive elements */
+    .animate-fade-in-up,
+    .modal-sheet,
+    [id^="modal-"] > div {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    /* Layout containment for card lists — prevents layout thrashing */
+    #tenant-list-container > div,
+    #detail-bills-list > div {
+      contain: layout style;
+    }
+    /* Hover card lift — GPU composited */
+    .hover\:-translate-y-0\.5:hover {
+      will-change: transform;
+    }
+    /* Remove expensive blur on very small / low-dpi screens */
+    @media (max-width: 400px), (max-resolution: 1dppx) {
+      .backdrop-blur-sm, .backdrop-blur-md {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background-color: rgba(15,23,42,0.85) !important;
+      }
     }
 
     /* Screen transition animations */
@@ -191,40 +230,101 @@
 <body class="font-sans antialiased text-slate-800 bg-slate-900 flex min-h-screen justify-center items-start sm:items-center sm:py-8">
 
   <!-- Mobile container: full screen on mobile, card on desktop -->
-  <div class="w-full sm:max-w-md h-screen sm:h-[900px] sm:max-h-[900px] bg-slate-50 flex flex-col shadow-2xl relative sm:rounded-3xl overflow-hidden sm:border sm:border-slate-200">
+  <div class="w-full sm:max-w-md h-screen sm:h-[900px] sm:max-h-[90vh] bg-slate-900 flex flex-col shadow-2xl relative sm:rounded-3xl overflow-hidden sm:border sm:border-slate-800">
     
-    <!-- LOGIN WALL CONTAINER -->
-    <div id="app-login-wall" class="hidden flex flex-col flex-grow items-center justify-center bg-slate-900 text-white p-5 relative overflow-hidden">
-      <!-- Decorative background glow -->
-      <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-rose-900/10 blur-3xl"></div>
-      <div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-rose-900/10 blur-3xl"></div>
+    <!-- LOGIN WALL CONTAINER WITH DEVOTIONAL BACKGROUND -->
+    <div id="app-login-wall" class="hidden flex flex-col flex-grow items-center justify-center text-white p-5 relative overflow-y-auto no-scrollbar bg-slate-900" style="background-image: url('login-bg.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+      
+      <!-- Light Gradient Overlay to keep photo bright & vivid -->
+      <div class="absolute inset-0 bg-black/25 pointer-events-none z-0"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none z-0"></div>
 
-      <div class="w-full max-w-sm space-y-6 text-center z-10 animate-fade-in-up">
-        <div class="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-800 to-maroon-700 flex items-center justify-center shadow-lg shadow-rose-900/30">
-          <i data-lucide="lock" class="w-8 h-8 text-rose-100 animate-pulse"></i>
+      <div class="w-full max-w-sm space-y-5 text-center z-10 animate-fade-in-up my-auto py-6">
+        <div class="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-800 to-maroon-700 flex items-center justify-center shadow-xl shadow-black/50 border border-rose-400/30">
+          <i data-lucide="lock" class="w-8 h-8 text-rose-100"></i>
         </div>
         
-        <div class="space-y-1.5">
-          <h2 class="text-xl font-black tracking-wide uppercase bg-gradient-to-r from-white via-rose-100 to-rose-200 bg-clip-text text-transparent">Satish Bhawan</h2>
-          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Rent Management Portal</p>
+        <div class="space-y-1 drop-shadow-md">
+          <h2 class="text-2xl font-black tracking-wide uppercase bg-gradient-to-r from-white via-rose-100 to-rose-200 bg-clip-text text-transparent">Satish Bhawan</h2>
+          <p class="text-[10px] text-rose-100 font-extrabold uppercase tracking-widest bg-slate-950/40 py-1 px-3 rounded-full inline-block border border-white/10 backdrop-blur-sm">Rent Management Portal</p>
         </div>
 
-        <!-- Unified Login Form -->
-        <form id="app-login-form" onsubmit="handleUnifiedLogin(event)" class="bg-slate-800/40 backdrop-blur-md p-5 rounded-2xl border border-slate-700/40 shadow-xl space-y-4 text-left">
+        <!-- Glassmorphism Unified Login Form -->
+        <form id="app-login-form" onsubmit="handleUnifiedLogin(event)" class="bg-slate-950/85 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-4 text-left">
           <div class="space-y-1.5">
-            <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Username / Login ID (लॉगिन आईडी / उपयोगकर्ता नाम)</label>
-            <input type="text" id="login-username-input" required class="w-full border border-slate-700 bg-slate-850/50 px-3.5 py-2.5 rounded-xl outline-none focus:border-rose-700 focus:bg-slate-800 text-sm font-semibold text-white placeholder:text-slate-600" placeholder="Enter Username or Phone number" />
+            <label class="text-[9px] font-bold text-slate-200 uppercase tracking-wider block">Username / Login ID (लॉगिन आईडी / उपयोगकर्ता नाम)</label>
+            <input type="text" id="login-username-input" required class="w-full border border-slate-700 bg-slate-900/90 px-3.5 py-2.5 rounded-xl outline-none focus:border-rose-500 focus:bg-slate-900 text-sm font-semibold text-white placeholder:text-slate-400 transition-all" placeholder="Enter Username or Phone number" />
           </div>
           <div class="space-y-1.5">
-            <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Password (पासवर्ड)</label>
-            <input type="password" id="login-password-input" required class="w-full border border-slate-700 bg-slate-850/50 px-3.5 py-2.5 rounded-xl outline-none focus:border-rose-700 focus:bg-slate-800 text-sm font-semibold text-white tracking-widest placeholder:text-slate-600" placeholder="••••••••" />
-            <p id="login-error-msg" class="text-[10px] text-rose-500 font-bold mt-1.5 hidden"></p>
+            <label class="text-[9px] font-bold text-slate-200 uppercase tracking-wider block">Password (पासवर्ड)</label>
+            <div class="relative flex items-center">
+              <input type="password" id="login-password-input" required class="w-full border border-slate-700 bg-slate-900/90 pl-3.5 pr-10 py-2.5 rounded-xl outline-none focus:border-rose-500 focus:bg-slate-900 text-sm font-semibold text-white tracking-widest placeholder:text-slate-400 transition-all" placeholder="••••••••" />
+              <button type="button" onclick="toggleLoginPasswordVisibility()" class="absolute right-3 p-1 text-slate-400 hover:text-rose-300 transition-colors focus:outline-none" title="Toggle password visibility">
+                <i id="icon-toggle-password" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <p id="login-error-msg" class="text-[10px] text-rose-400 font-bold mt-1.5 hidden"></p>
           </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-rose-800 to-maroon-700 hover:from-rose-700 text-white font-extrabold py-2.5 rounded-xl transition text-xs shadow-md shadow-rose-900/20 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+          <button type="submit" class="w-full bg-gradient-to-r from-rose-800 via-maroon-700 to-rose-700 hover:from-rose-700 hover:to-maroon-600 text-white font-extrabold py-3 rounded-xl transition text-xs shadow-lg shadow-black/50 flex items-center justify-center gap-1.5 uppercase tracking-wider active:scale-[0.98]">
             <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Login
           </button>
         </form>
-        <p class="text-[9px] text-slate-500">Authorized Personnel Only • Satish Bhawan Properties</p>
+        <p class="text-[10px] text-white font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-slate-950/40 py-1 px-3 rounded-full inline-block border border-white/10">Authorized Personnel Only • Satish Bhawan Properties</p>
+      </div>
+    </div>
+
+    <!-- TENANT WELCOME CARD CONTAINER (Same Devotional Background Photo) -->
+    <div id="app-tenant-welcome-wall" class="hidden flex flex-col flex-grow items-center justify-center text-white p-5 relative overflow-y-auto no-scrollbar bg-slate-900" style="background-image: url('login-bg.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+      
+      <!-- Light Gradient Overlay -->
+      <div class="absolute inset-0 bg-black/25 pointer-events-none z-0"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none z-0"></div>
+
+      <div class="w-full max-w-sm space-y-5 text-center z-10 animate-fade-in-up my-auto py-6">
+        
+        <!-- Frosted Glass Card -->
+        <div class="bg-slate-950/85 backdrop-blur-md p-6 rounded-3xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.6)] space-y-4">
+          
+          <!-- Avatar / Profile Ring -->
+          <div class="relative inline-block">
+            <div id="welcome-tenant-avatar" class="w-20 h-20 mx-auto rounded-full border-2 border-rose-400/80 bg-slate-900 overflow-hidden flex items-center justify-center font-bold text-2xl text-white shadow-xl">
+              <!-- Rendered dynamic photo or avatar -->
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-slate-900 text-white shadow-md" title="Verified Tenant">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+          </div>
+
+          <!-- Welcome Heading & Subtitle -->
+          <div class="space-y-1">
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-rose-300 bg-rose-950/60 border border-rose-500/30 px-3 py-0.5 rounded-full inline-block">
+              Welcome Back • स्वागत है
+            </span>
+            <h2 id="welcome-tenant-name" class="text-xl font-black text-white tracking-wide mt-1">Tenant Name</h2>
+            <p id="welcome-flat-number" class="text-xs font-bold text-slate-300 flex items-center justify-center gap-1">
+              <i data-lucide="door-open" class="w-3.5 h-3.5 text-rose-400"></i>
+              <span>Flat - 101</span>
+            </p>
+          </div>
+
+          <!-- Dues Summary Badge Card -->
+          <div class="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl space-y-1.5 text-center shadow-inner">
+            <p class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Current Account Summary (खाता स्थिति)</p>
+            <div id="welcome-dues-status" class="text-base font-black text-emerald-400">
+              ₹ 0 (Cleared / चुकता)
+            </div>
+            <p id="welcome-due-date-note" class="text-[10px] text-slate-400 font-semibold">Next Cycle Start: -</p>
+          </div>
+
+          <!-- OK / Continue Button -->
+          <button onclick="dismissTenantWelcome()" class="w-full bg-gradient-to-r from-rose-800 via-maroon-700 to-rose-700 hover:from-rose-700 hover:to-maroon-600 text-white font-black py-3 px-4 rounded-xl transition text-xs shadow-lg shadow-black/50 flex items-center justify-center gap-2 uppercase tracking-wider active:scale-[0.98]">
+            <span>OK • Open Portal (पोर्टल खोलें)</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+
+        </div>
+
+        <p class="text-[10px] text-white font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] bg-slate-950/40 py-1 px-3 rounded-full inline-block border border-white/10">Satish Bhawan Rent Management</p>
       </div>
     </div>
 
@@ -288,7 +388,7 @@
         </button>
       </div>
 
-      <main class="flex-grow flex flex-col overflow-y-auto no-scrollbar relative print:overflow-visible bg-slate-50">
+      <main class="flex-grow flex flex-col overflow-y-auto relative print:overflow-visible bg-slate-50">
       
       <section id="screen-dashboard" class="hidden flex-1 flex flex-col p-4 space-y-4 bg-gradient-to-b from-slate-50 to-slate-100/50 animate-fade-in-up">
         
@@ -354,7 +454,7 @@
         <!-- Search Bar -->
         <div class="flex items-center gap-2 bg-white px-3.5 py-2.5 rounded-2xl border border-slate-200 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.03)] focus-within:ring-2 focus-within:ring-rose-800/10 focus-within:border-rose-800 transition-all shrink-0">
           <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-          <input type="text" id="dashboard-search" oninput="renderTenantList()" placeholder="Search flat, tenant name..." class="w-full text-xs font-semibold outline-none bg-transparent text-slate-700 placeholder-slate-400" />
+          <input type="text" id="dashboard-search" oninput="debounceSearch()" placeholder="Search flat, tenant name..." class="w-full text-xs font-semibold outline-none bg-transparent text-slate-700 placeholder-slate-400" />
         </div>
 
         <!-- Filter Tabs -->
@@ -970,6 +1070,23 @@
     let db = null;
     let fbInitialized = false;
 
+    // Toggle Password Visibility (Eye / Eye-Off)
+    function toggleLoginPasswordVisibility() {
+      const passInput = document.getElementById('login-password-input');
+      const toggleIcon = document.getElementById('icon-toggle-password');
+      if (!passInput || !toggleIcon) return;
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        passInput.classList.remove('tracking-widest');
+        toggleIcon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        passInput.type = 'password';
+        passInput.classList.add('tracking-widest');
+        toggleIcon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
     // Authentication and login handlers
     function handleUnifiedLogin(e) {
       e.preventDefault();
@@ -1006,17 +1123,68 @@
         sessionStorage.setItem('app-logged-in', 'true');
         sessionStorage.setItem('app-logged-in-role', 'tenant');
         sessionStorage.setItem('app-logged-in-tenant-id', String(tenant.id));
+        state.selectedTenantId = tenant.id;
         
         loadState().then(() => {
-          document.getElementById('app-login-wall').classList.add('hidden');
-          document.getElementById('app-main-layout').classList.remove('hidden');
-          document.getElementById('app-main-layout').classList.add('flex');
-          lucide.createIcons();
+          showTenantWelcomeScreen(tenant);
         });
       } else {
         errorEl.innerText = "Incorrect Login ID or Password! (गलत लॉगिन आईडी या पासवर्ड!)";
         errorEl.classList.remove('hidden');
       }
+    }
+
+    // Display Personalized Welcome Card for Tenant Login
+    function showTenantWelcomeScreen(tenant) {
+      if (!tenant) return;
+      
+      // Avatar photo / initial
+      const avatarEl = document.getElementById('welcome-tenant-avatar');
+      if (tenant.photo) {
+        avatarEl.innerHTML = `<img src="${tenant.photo}" class="w-full h-full object-cover" />`;
+      } else {
+        avatarEl.innerHTML = `<span class="uppercase font-black text-2xl text-rose-200">${(tenant.name || 'T').charAt(0)}</span>`;
+      }
+      
+      // Name and Flat
+      document.getElementById('welcome-tenant-name').innerText = tenant.name;
+      document.getElementById('welcome-flat-number').innerHTML = `<i data-lucide="door-open" class="w-3.5 h-3.5 text-rose-400"></i> <span>Flat - ${tenant.flatNumber}</span>`;
+      
+      // Calculate Dues
+      let paidTotal = (tenant.paymentHistory || []).reduce((s, p) => s + Number(p.amount), 0);
+      let billedTotal = (tenant.bills || []).reduce((s, b) => s + Number(b.subTotal), 0);
+      let balance = billedTotal - paidTotal;
+      if (!tenant.bills || tenant.bills.length === 0) {
+        balance = Number(tenant.monthlyRent || 0) - paidTotal;
+      }
+      
+      const duesEl = document.getElementById('welcome-dues-status');
+      if (balance > 0) {
+        duesEl.innerHTML = `<span class="text-rose-400 font-black">₹ ${balance.toLocaleString('en-IN')} <span class="text-[10px] font-bold text-rose-300 block uppercase mt-0.5">(Pending Dues / बकाया)</span></span>`;
+      } else if (balance < 0) {
+        duesEl.innerHTML = `<span class="text-emerald-400 font-black">₹ ${Math.abs(balance).toLocaleString('en-IN')} <span class="text-[10px] font-bold text-emerald-300 block uppercase mt-0.5">(Advance Balance / एडवांस)</span></span>`;
+      } else {
+        duesEl.innerHTML = `<span class="text-emerald-400 font-black">₹ 0 <span class="text-[10px] font-bold text-emerald-300 block uppercase mt-0.5">(Rent Cleared / चुकता)</span></span>`;
+      }
+      
+      document.getElementById('welcome-due-date-note').innerText = `Next Cycle Start: ${formatDate(tenant.startDate)}`;
+      
+      // Hide login wall, show welcome wall
+      document.getElementById('app-login-wall').classList.add('hidden');
+      const welcomeWall = document.getElementById('app-tenant-welcome-wall');
+      welcomeWall.classList.remove('hidden');
+      welcomeWall.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function dismissTenantWelcome() {
+      const welcomeWall = document.getElementById('app-tenant-welcome-wall');
+      welcomeWall.classList.add('hidden');
+      welcomeWall.classList.remove('flex');
+      document.getElementById('app-main-layout').classList.remove('hidden');
+      document.getElementById('app-main-layout').classList.add('flex');
+      renderSelectedTenant();
+      lucide.createIcons();
     }
 
     function handleAppLogout() {
@@ -1095,7 +1263,20 @@
         const primaryActions = document.getElementById('detail-actions-panel');
       }
       const hdrActions = document.getElementById('header-right-actions');
-      if (hdrActions) lucide.createIcons({ root: hdrActions });
+      if (hdrActions) lucide.createIcons();
+    }
+
+    // Debounce helper for search input
+    let _searchTimer = null;
+    function debounceSearch() {
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(renderTenantList, 160);
+    }
+
+    // Scoped icon refresh helper
+    // lucide.js bundled version queries document-wide, so we just call createIcons()
+    function createIconsIn(rootEl) {
+      lucide.createIcons();
     }
 
     // Load initial data on startup
@@ -1483,7 +1664,7 @@
             statusDot.className = "absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
           }
           const headerTitle = document.getElementById('header-title-container');
-          if (headerTitle) lucide.createIcons({ root: headerTitle });
+          if (headerTitle) lucide.createIcons();
           
           // Real-time listener for incoming changes
           db.ref('rent_state').on('value', (snapshot) => {
@@ -1528,7 +1709,7 @@
         statusDot.className = "absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 animate-pulse";
       }
       const headerTitle = document.getElementById('header-title-container');
-      if (headerTitle) lucide.createIcons({ root: headerTitle });
+      if (headerTitle) lucide.createIcons();
     }
 
     function toggleSettingsDropdown(e) {
@@ -1760,7 +1941,7 @@
             <p class="text-xs">Create a new tenant to start tracking</p>
           </div>
         `;
-        lucide.createIcons();
+      lucide.createIcons();
         return;
       }
 
@@ -1843,7 +2024,7 @@
                 <p class="text-[10px] mt-1">Please wait a moment.</p>
               </div>
             `;
-            lucide.createIcons({ root: billsContainer });
+            lucide.createIcons();
           }
           return;
         }
@@ -2096,8 +2277,7 @@
       });
 
       applyRoleBasedAccess();
-      const scrDetails = document.getElementById('screen-tenant-details');
-      if (scrDetails) lucide.createIcons({ root: scrDetails });
+      lucide.createIcons();
     }
 
     // MODAL TRIGGERS
